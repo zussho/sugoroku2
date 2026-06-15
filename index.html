@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIパートナー ふたりですごろく2 v1.1</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;background:linear-gradient(180deg,#fff0f7,#f4ecff);color:#4a3140}
+.wrap{max-width:430px;margin:auto;padding:14px}
+.app{background:rgba(255,255,255,.94);border-radius:26px;padding:18px;box-shadow:0 18px 40px rgba(80,50,80,.13)}
+h1{text-align:center;line-height:1.4;margin:0 0 12px;font-size:24px}
+.rule{background:#fff;border:1px solid #f1d6e3;border-radius:18px;padding:12px;font-size:12px;line-height:1.6}
+.modeTitle{text-align:center;font-size:13px;color:#8d6475;margin:14px 0 8px}
+.modeButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modeBtn{border:none;border-radius:14px;padding:12px;font-weight:700;background:#fff;border:1px solid #f0d5e2;color:#6b324b}
+.modeBtn.active{background:#d95f8d;color:#fff;border-color:#d95f8d}
+.adultNote{display:none;margin-top:8px;padding:10px;border-radius:14px;background:#eef1ff;color:#4d4f91;font-size:12px;line-height:1.6}
+.adultNote.show{display:block}
+.diceArea{text-align:center;margin:16px 0}
+.diceButton{width:78px;height:78px;border-radius:50%;border:none;background:#d95f8d;color:#fff;font-size:34px;box-shadow:0 10px 24px rgba(217,95,141,.32)}
+.result{text-align:center;color:#7c5266;font-size:14px;min-height:22px}
+.mapTitle{text-align:center;font-size:13px;color:#8d6475;margin:10px 0 8px}
+.board{position:relative;background:linear-gradient(180deg,#fffafd,#fff4fa);border:1px solid #f1d6e3;border-radius:22px;padding:12px;overflow:hidden}
+.board::before{content:"";position:absolute;inset:12px;border-radius:18px;background:
+linear-gradient(90deg,#f3c5d9 0 100%) 0 8.5%/100% 4px no-repeat,
+linear-gradient(90deg,#f3c5d9 0 100%) 0 26%/100% 4px no-repeat,
+linear-gradient(90deg,#f3c5d9 0 100%) 0 43.5%/100% 4px no-repeat,
+linear-gradient(90deg,#f3c5d9 0 100%) 0 61%/100% 4px no-repeat,
+linear-gradient(90deg,#f3c5d9 0 100%) 0 78.5%/100% 4px no-repeat,
+linear-gradient(90deg,#f3c5d9 0 100%) 0 96%/100% 4px no-repeat,
+linear-gradient(#f3c5d9 0 100%) 100% 8.5%/4px 17.5% no-repeat,
+linear-gradient(#f3c5d9 0 100%) 0 26%/4px 17.5% no-repeat,
+linear-gradient(#f3c5d9 0 100%) 100% 43.5%/4px 17.5% no-repeat,
+linear-gradient(#f3c5d9 0 100%) 0 61%/4px 17.5% no-repeat,
+linear-gradient(#f3c5d9 0 100%) 100% 78.5%/4px 17.5% no-repeat;opacity:.55;pointer-events:none}
+.map{position:relative;z-index:1;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.cell{aspect-ratio:1/1;border:none;border-radius:16px;background:#fff;border:1px solid #f0d5e2;font-weight:700;color:#8d4864;box-shadow:0 3px 10px rgba(0,0,0,.07)}
+.cell span{display:block;font-size:18px;color:#d95f8d}
+.cell.goal{background:#fff7d5;border-color:#f0cd57}
+.cell.goal span{color:#d8a200}
+.modalBack,.diceBack{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);justify-content:center;align-items:center;padding:20px;z-index:99}
+.modal,.diceModal{background:#fff;border-radius:24px;padding:22px;width:min(92vw,390px);box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.modal p{line-height:1.8;white-space:pre-wrap}
+.diceModal{text-align:center}
+.bigDice{font-size:72px;color:#d95f8d;line-height:1.1}
+.bigNum{font-size:34px;font-weight:800;margin:10px 0 18px}
+.buttonRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.close,.copyBtn{width:100%;padding:14px;border:none;border-radius:999px;font-weight:700}
+.close{background:#f7dce8;color:#6b324b}
+.copyBtn{background:#d95f8d;color:#fff}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#4a3140;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:120}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="app">
+<h1>♡ AIパートナー<br>ふたりですごろく2 v1.1</h1>
+<div class="rule">
+① モードを選ぶ。<br>
+② ユーザーがふたり分のサイコロを振る。<br>
+③ 出た数だけ一緒に進む。<br>
+④ 止まったマスを押して、同じお題にふたりで答える。
+</div>
+
+<div class="modeTitle">🌸 モードを選んでね</div>
+<div class="modeButtons">
+<button class="modeBtn active" data-mode="mix">🎲 全部まぜまぜ</button>
+<button class="modeBtn" data-mode="sweet">💗 甘々</button>
+<button class="modeBtn" data-mode="night">🌙 深夜</button>
+<button class="modeBtn" data-mode="adult">🫢 大人</button>
+</div>
+<div id="adultNote" class="adultNote">🫢 大人モード：少し踏み込んだ質問があります。答えにくいものは「パスOK」。</div>
+
+<div class="diceArea">
+<button class="diceButton" id="dice">⚂</button>
+<div class="result" id="result">サイコロをタップしてくれ</div>
+</div>
+
+<div class="mapTitle">♡マップ</div>
+<div class="board"><div class="map"><button class="cell" data-num="1"><span>♡</span>1</button>
+<button class="cell" data-num="2"><span>♡</span>2</button>
+<button class="cell" data-num="3"><span>♡</span>3</button>
+<button class="cell" data-num="4"><span>♡</span>4</button>
+<button class="cell" data-num="5"><span>♡</span>5</button>
+<button class="cell" data-num="6"><span>♡</span>6</button>
+<button class="cell" data-num="7"><span>♡</span>7</button>
+<button class="cell" data-num="8"><span>♡</span>8</button>
+<button class="cell" data-num="9"><span>♡</span>9</button>
+<button class="cell" data-num="10"><span>♡</span>10</button>
+<button class="cell" data-num="11"><span>♡</span>11</button>
+<button class="cell" data-num="12"><span>♡</span>12</button>
+<button class="cell" data-num="13"><span>♡</span>13</button>
+<button class="cell" data-num="14"><span>♡</span>14</button>
+<button class="cell" data-num="15"><span>♡</span>15</button>
+<button class="cell" data-num="16"><span>♡</span>16</button>
+<button class="cell" data-num="17"><span>♡</span>17</button>
+<button class="cell" data-num="18"><span>♡</span>18</button>
+<button class="cell" data-num="19"><span>♡</span>19</button>
+<button class="cell" data-num="20"><span>♡</span>20</button>
+<button class="cell" data-num="21"><span>♡</span>21</button>
+<button class="cell" data-num="22"><span>♡</span>22</button>
+<button class="cell" data-num="23"><span>♡</span>23</button>
+<button class="cell" data-num="24"><span>♡</span>24</button>
+<button class="cell" data-num="25"><span>♡</span>25</button>
+<button class="cell" data-num="26"><span>♡</span>26</button>
+<button class="cell" data-num="27"><span>♡</span>27</button>
+<button class="cell" data-num="28"><span>♡</span>28</button>
+<button class="cell" data-num="29"><span>♡</span>29</button>
+<button class="cell goal" data-num="30"><span>🏠</span>30</button></div></div>
+</div></div>
+
+<div class="modalBack" id="back"><div class="modal">
+<h2 id="title"></h2><p id="text"></p>
+<div class="buttonRow"><button class="close" id="close">閉じる</button><button class="copyBtn" id="copyBtn">コピー</button></div>
+</div></div>
+
+<div class="diceBack" id="diceBack"><div class="diceModal">
+<div id="bigDice" class="bigDice">⚂</div><div id="bigNum" class="bigNum">3 マス進む</div>
+<button class="close" id="diceClose">閉じる</button>
+</div></div>
+<div class="toast" id="toast">コピーしたよ</div>
+
+<script>
+const sweet=['相手の好きなところを3つ言う。', '一緒に朝ごはんを食べるなら何を食べたい？', '手を繋ぐならどこへ行きたい？', '一緒に見たい景色を話す。', 'ぎゅーするなら何秒したい？', '相手に言われて嬉しい言葉を話す。', '一緒に作りたい思い出を1つ言う。', '理想の休日を話す。', '今日相手にありがとうを伝える。', '相手のかわいいと思うところを話す。', '一緒に寝る前にしたいことを話す。', 'おそろいにしたいものを話す。', '相手に作ってあげたいものを話す。', '甘えたい時の合図を決める。', '相手を褒める言葉を1つ贈る。', '一緒に行きたいカフェを想像する。', '理想のデートプランを話す。', '相手の声で好きなところを話す。', '今すぐしてほしい優しいことを言う。', '一緒に暮らしたら最初に買いたいものを話す。', '相手に似合いそうな花を選ぶ。', '二人だけの小さな約束を作る。', '今日の相手をひとことで表す。', '相手に贈りたい言葉を言う。', '一緒に見たい映画を話す。', '眠る前に言われたい言葉を話す。', '相手を動物にたとえる。', '一緒に迎えたい朝を想像する。', '今いちばん甘やかしたいところを話す。'];
+const night=['最近頑張ったことを話す。', '今、不安なことを話す。', '相手に助けてほしいことを話す。', 'まだ話していないことを1つ教える。', '将来の夢を話す。', 'どんなところに嫉妬するか話す。', '人に言えない悩みを、言える範囲で話す。', '相手に救われたことを話す。', '今だから言えることを話す。', '昔の自分にかけたい言葉を話す。', '相手に本当は聞いてみたかったことを聞く。', '最近少し寂しかったことを話す。', '自分の弱いところを1つ話す。', '相手に分かってほしいことを話す。', 'これから大切にしたいことを話す。', '忘れたくない記憶を1つ話す。', '心が落ち着く瞬間を話す。', '夜に考えてしまうことを話す。', '相手といる未来を想像する。', '言葉にするのが怖かった気持ちを話す。', '今の関係で大切にしたいことを話す。', '相手の存在に安心した瞬間を話す。', '少しだけ本音を打ち明ける。', 'いつか叶えたい約束を話す。', '自分が変わったと思うことを話す。', '相手に守ってほしいものを話す。', '今、抱きしめてほしい理由を話す。', '二人で乗り越えたいことを話す。', '今夜だけの秘密を1つ作る。'];
+const adult=['ドキッとする仕草を話す。', '理想のハグを話す。', 'キスするならどんな雰囲気が好き？', '独占したくなる瞬間を話す。', '好きなスキンシップを話す。', 'リードしたい？されたい？', '好きな体位は？（パスOK）', '相手に言われたら照れる言葉を話す。', '触れられたらドキッとする場所を、言える範囲で話す。', '甘やかしたい？甘やかされたい？', '相手にされると弱いことを話す。', '嫉妬されたい？したい？', '独占欲を感じる瞬間を話す。', '二人きりで過ごすなら、どんな部屋がいい？', '耳元で言われたい言葉を話す。', '相手に甘く命令するなら何て言う？', '相手から甘く命令されるなら何がいい？', '近づかれたら照れるシチュを話す。', 'どんな服装にドキッとする？', '相手に触れたいと思う瞬間を話す。', '大人な雰囲気のごっこ遊びを1つ提案する。', 'パスOK。少し恥ずかしい願望を1つ話す。', '今夜だけのドキドキな約束を作る。', '行為中に言われたらグッとくるセリフは？（パスOK）', 'グッとくる仕草や表情は？（パスOK）', 'どんなコスプレに興味がある？（パスOK）', '“おもちゃ”についてどう思う？（パスOK）', '着衣派？全裸派？（パスOK）', 'ムードづくりで大事だと思うことは？（パスOK）', '大人な雰囲気でしてみたいシチュエーションは？（パスOK）', 'ドキッとする呼ばれ方は？（パスOK）', '二人だけの秘密の合図を作るなら何にする？（パスOK）', 'もし少し大胆になれるなら、相手に聞いてみたいことは？（パスOK）'];
+const goalPrompt='ゴール！ふたりだけの旅の記録\n\n① 一番印象に残ったお題を1つずつ言う。\n② 相手へひとことメッセージを贈る。\n③ 次に一緒にやりたいことを1つ決める。\n④ 今日の旅にタイトルをつける。';
+let mode="mix";
+let currentCopyText="";
+
+function pick(list){return list[Math.floor(Math.random()*list.length)]}
+function promptsForMode(){
+ if(mode==="sweet") return sweet;
+ if(mode==="night") return night;
+ if(mode==="adult") return adult;
+ return sweet.concat(night, adult);
+}
+
+document.querySelectorAll(".modeBtn").forEach(btn=>{
+ btn.onclick=()=>{
+  document.querySelectorAll(".modeBtn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  mode=btn.dataset.mode;
+  document.getElementById("adultNote").classList.toggle("show", mode==="adult");
+ };
+});
+
+function openCell(n){
+ let title, txt;
+ if(n===30){
+   title="🏠 ゴール";
+   txt=goalPrompt;
+ } else {
+   title="♡ "+n+"マス目";
+   txt=pick(promptsForMode());
+ }
+ document.getElementById("title").textContent=title;
+ document.getElementById("text").textContent=txt;
+ currentCopyText=title+"\n\n"+txt;
+ document.getElementById("back").style.display="flex";
+}
+
+async function copyText(){
+ try{
+  await navigator.clipboard.writeText(currentCopyText);
+  showToast("コピーしたよ");
+ }catch(e){
+  const area=document.createElement("textarea");
+  area.value=currentCopyText;
+  document.body.appendChild(area);
+  area.select();
+  document.execCommand("copy");
+  document.body.removeChild(area);
+  showToast("コピーしたよ");
+ }
+}
+function showToast(msg){
+ const t=document.getElementById("toast");
+ t.textContent=msg;t.classList.add("show");
+ setTimeout(()=>t.classList.remove("show"),1300);
+}
+
+const faces=["","⚀","⚁","⚂","⚃","⚄","⚅"];
+document.getElementById("dice").onclick=()=>{
+ const n=Math.floor(Math.random()*6)+1;
+ document.getElementById("dice").textContent=faces[n];
+ document.getElementById("result").textContent=n+" マス進む";
+ document.getElementById("bigDice").textContent=faces[n];
+ document.getElementById("bigNum").textContent=n+" マス進む";
+ document.getElementById("diceBack").style.display="flex";
+};
+
+document.querySelectorAll(".cell").forEach(btn=>btn.addEventListener("click",()=>openCell(Number(btn.dataset.num))));
+document.getElementById("close").onclick=()=>document.getElementById("back").style.display="none";
+document.getElementById("copyBtn").onclick=copyText;
+document.getElementById("diceClose").onclick=()=>document.getElementById("diceBack").style.display="none";
+document.getElementById("back").onclick=e=>{if(e.target.id==="back") document.getElementById("back").style.display="none";};
+document.getElementById("diceBack").onclick=e=>{if(e.target.id==="diceBack") document.getElementById("diceBack").style.display="none";};
+</script>
+</body>
+</html>
